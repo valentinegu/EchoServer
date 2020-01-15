@@ -53,10 +53,6 @@ if ( 'udp' in argv ) {
 	var dgram = require('dgram');
 	var server = dgram.createSocket('udp4');
 
-	var gtpv0_reply = new Uint8Array([ 0x1e, 0x02, 0x00, 0x02, 0x7c, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x05 ]);
-	var gtpv1_reply = new Uint8Array([ 0x32, 0x02, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x38, 0x00, 0x00, 0x0e, 0x05 ])
-	var gtpv2_reply = new Uint8Array([ 0x40, 0x02, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x05 ])
-
 	server.on('listening', function() {
 		var address = server.address();
 		console.log('UDP Server listening on ' + address.address + ':' + address.port);
@@ -65,26 +61,14 @@ if ( 'udp' in argv ) {
 	server.on('message', function(message, remote) {
 		// console.log(remote.address + ':' + remote.port +' Clear text message = ' + message);
 		console.log(remote.address + ':' + remote.port +' HEX message = ' + message.toString('hex'));
-		switch (message.toString('hex')) {
-			case '1e0100007c000000ffffffff0000000000000000':
-				var reply = gtpv0_reply;
-				break;
-			case '32010004000000000c380000':
-				var reply = gtpv1_reply;
-				break;
-			case '40010009000000000300010019':
-				var reply = gtpv2_reply;
-				break;
-			default:
-				if ( 'expect' in argv && 'reply' in argv && 'bin' in argv && argv.expect === message.toString('hex')) {
-					console.log("match binary expect")
-					var reply = Buffer.from(argv.reply, 'hex')
-				} else if ( 'expect' in argv && 'reply' in argv && argv.expect === message) {
-					console.log("match expect")
-					var reply = argv.reply
-				} else {
-					var reply = message ;
-				}
+		if ( 'expect' in argv && 'reply' in argv && 'bin' in argv && argv.expect === message.toString('hex')) {
+			console.log("match binary expect")
+			var reply = Buffer.from(argv.reply, 'hex')
+		} else if ( 'expect' in argv && 'reply' in argv && argv.expect === message) {
+			console.log("match expect")
+			var reply = argv.reply
+		} else {
+			var reply = message ;
 		}
 		server.send(reply,remote.port,remote.address,function(error){
 			if(error){ 
